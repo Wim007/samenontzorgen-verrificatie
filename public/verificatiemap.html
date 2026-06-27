@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verificatiemap — SamenOntzorgen</title>
+  <meta name="description" content="Live verificatiemap voor kwalificaties van zorgprofessionals." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary:    #1B4F72;
+      --primary-dk: #154360;
+      --accent:     #00BCD4;
+      --pink:       #D4325A;
+      --logo-pink:  #E82878;
+      --pink-light: rgba(212,50,90,.08);
+      --teal:       #19ada7;
+      --bg:         #FAFAFA;
+      --text:       #2C3E50;
+      --light:      #EAF0F6;
+      --white:      #FFFFFF;
+      --muted:      #5a6478;
+      --radius:     12px;
+      --shadow:     0 4px 24px rgba(27,79,114,.10);
+      --transition: .25s ease;
+      --border:     #D6E4F0;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    .container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .navbar {
+      background: var(--white);
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .navbar .container {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 16px; padding-bottom: 16px;
+    }
+    .site-logo { display: flex; align-items: center; flex-shrink: 0; }
+    .site-logo svg { height: 48px; width: auto; }
+    .nav-badge {
+      font-size: .8rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--muted);
+    }
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dk) 100%);
+      color: var(--white);
+      padding: 72px 0 56px;
+    }
+    .section-label {
+      text-transform: uppercase; letter-spacing: .12em; font-size: .8rem;
+      font-weight: 600; color: var(--accent); margin-bottom: 12px;
+    }
+    .hero h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+    .hero-accent { color: #5ee8cc; }
+    .hero p { font-size: 1.1rem; max-width: 600px; opacity: .9; }
+    .controls-bar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      padding: 14px 0;
+      position: sticky; top: 81px; z-index: 90;
+    }
+    .controls-inner {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+    .ctrl-label {
+      font-size: .8rem; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .07em; white-space: nowrap;
+    }
+    .prof-input {
+      padding: 9px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      background: var(--bg); font-size: .95rem; font-weight: 500;
+      color: var(--text); width: 240px;
+      font-family: inherit;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .prof-input:focus {
+      outline: none; border-color: var(--pink);
+      box-shadow: 0 0 0 3px var(--pink-light);
+    }
+    .prof-input::placeholder { color: #b0bac8; }
+    .progress-group { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+    .progress-bar-bg {
+      width: 120px; height: 6px; background: var(--border);
+      border-radius: 9999px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: var(--teal); border-radius: 9999px;
+      transition: width .4s ease; width: 0%;
+    }
+    .progress-count { font-size: .8rem; font-weight: 700; color: var(--primary); min-width: 32px; }
+    .btn-reset {
+      padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: .8rem; font-weight: 600; color: var(--muted);
+      background: none; font-family: inherit; cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-reset:hover { border-color: #C0392B; color: #C0392B; }
+    .main-content { padding: 48px 0 80px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 28px; }
+    .card {
+      background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+      display: flex; flex-direction: column;
+      border-top: 3px solid transparent;
+      transition: transform var(--transition), box-shadow var(--transition), border-top var(--transition);
+      overflow: hidden;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(27,79,114,.15); }
+    .card.card--done  { border-top: 3px solid var(--teal); }
+    .card.card--partial { border-top: 3px solid var(--logo-pink); }
+    .card-header {
+      padding: 24px 28px 18px;
+      border-bottom: 1px solid var(--light);
+      display: flex; align-items: flex-start; gap: 16px;
+    }
+    .card-icon {
+      width: 48px; height: 48px; border-radius: 10px; background: var(--light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .card-meta { flex: 1; }
+    .card-title { font-size: 1.05rem; font-weight: 600; color: var(--primary); margin-bottom: 2px; }
+    .card-subtitle { font-size: .85rem; color: var(--muted); }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--border); flex-shrink: 0; margin-top: 5px;
+      transition: background var(--transition);
+    }
+    .status-dot.done    { background: var(--teal); }
+    .status-dot.partial { background: var(--logo-pink); }
+    .card-body { padding: 20px 28px 24px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+    .method-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; padding: 4px 10px; border-radius: 9999px;
+    }
+    .badge--live   { background: #e0f7f6; color: #0d7a75; }
+    .badge--app    { background: #e8f0fe; color: #1a56db; }
+    .badge--doc    { background: #fff3e0; color: #b45309; }
+    .badge--manual { background: #fff3e0; color: #b45309; }
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .checklist li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: .95rem; line-height: 1.45;
+      cursor: pointer; user-select: none;
+    }
+    .check-box {
+      width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px;
+      border: 2px solid var(--border); border-radius: 5px;
+      background: var(--bg); display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition);
+    }
+    .checklist li.checked .check-box {
+      background: var(--teal); border-color: var(--teal);
+    }
+    .checklist li.checked .check-box::after {
+      content: '';
+      width: 10px; height: 6px;
+      border-left: 2px solid white; border-bottom: 2px solid white;
+      transform: rotate(-45deg) translateY(-1px); display: block;
+    }
+    .checklist li.checked .check-text { color: #b0bac8; text-decoration: line-through; }
+    .check-text { flex: 1; }
+    .note-field {
+      width: 100%; padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      background: var(--bg); font-size: .875rem; color: var(--text);
+      resize: vertical; min-height: 46px; line-height: 1.5;
+      font-family: inherit;
+      transition: border-color var(--transition);
+    }
+    .note-field::placeholder { color: #b0bac8; }
+    .note-field:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 0 3px var(--pink-light); }
+    .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 20px; border-radius: 8px; font-size: .9rem; font-weight: 600;
+      cursor: pointer; border: none; font-family: inherit; width: 100%;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+    .btn-primary  { background: var(--accent); color: var(--white); }
+    .btn-primary:hover { background: #0097A7; }
+    .btn-secondary {
+      background: var(--white); color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+    .tip-box {
+      background: var(--light); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; padding: 9px 14px;
+      font-size: .83rem; color: var(--muted); line-height: 1.55;
+    }
+    .tip-box strong { color: var(--text); }
+    footer {
+      background: var(--primary); color: rgba(255,255,255,.75);
+      padding: 32px 0; text-align: center; font-size: .875rem;
+    }
+    footer span { color: var(--accent); }
+    @media print {
+      .navbar, .controls-bar, .btn-group { display: none !important; }
+      body { background: white; }
+      .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+    }
+    @media (max-width: 600px) {
+      .cards { grid-template-columns: 1fr; }
+      .progress-group { margin-left: 0; }
+      .hero { padding: 48px 0 40px; }
+    }
+  </style>
+</head>
+<body>
+<!-- LOGIN GATE -->
+<div id="loginGate" style="
+  position:fixed; inset:0; z-index:9999;
+  background: linear-gradient(135deg, #1B4F72 0%, #154360 100%);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Inter',sans-serif;
+">
+  <div style="
+    background:#fff; border-radius:16px; padding:48px 40px; width:100%; max-width:380px;
+    box-shadow:0 24px 64px rgba(0,0,0,0.25); text-align:center;
+  ">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 200" height="44" style="margin:0 auto 24px;" aria-label="SamenOntzorgen">
+      <g transform="translate(5,8) scale(0.73)">
+        <path fill="#19ada7" d="M113.72,43.85S135.45-.54,179.68,8.28c44.23,8.82,44.2,57.72,19.36,99.64-33.98,57.33-85.32,77.92-85.32,77.92,0,0,40.07-40.59,61.5-81.96,22.55-43.53,5.25-96.76-61.5-60.03Z"/>
+        <path fill="#d92536" d="M107.59,43.85S87.28,2.65,46.04,7.12C4.8,11.58-9.69,61.48,24.52,111.22c36.94,54.36,82.06,73.46,82.06,73.46,0,0-32.85-28.18-56.88-73.88-23.03-43.81-12.38-76.16,14.48-78.71,25.45-2.41,43.39,11.75,43.39,11.75Z"/>
+      </g>
+      <text x="165" y="112" font-family="Inter,Arial,sans-serif" font-weight="700" font-size="78" letter-spacing="-1"><tspan fill="#d92536">Samen</tspan><tspan fill="#19ada7">Ontzorgen</tspan></text>
+      <text x="166" y="152" font-family="Inter,Arial,sans-serif" font-style="italic" font-weight="500" font-size="32" fill="#19ada7">Van zorgen naar grip</text>
+    </svg>
+    <p style="color:#5a6478; font-size:.9rem; margin-bottom:28px; line-height:1.5;">
+      Dit is een interne tool.<br>Voer het wachtwoord in om verder te gaan.
+    </p>
+    <form id="loginForm" onsubmit="doLogin(event)" style="display:flex; flex-direction:column; gap:12px;">
+      <input
+        id="loginInput" type="password" placeholder="Wachtwoord"
+        autocomplete="current-password"
+        style="
+          padding:12px 16px; border:1.5px solid #D6E4F0; border-radius:8px;
+          font-size:1rem; font-family:'Inter',sans-serif; color:#2C3E50;
+          background:#FAFAFA; outline:none; text-align:center; letter-spacing:2px;
+          transition:border-color .2s;
+        "
+        onfocus="this.style.borderColor='#00BCD4'"
+        onblur="this.style.borderColor='#D6E4F0'"
+      >
+      <button type="submit" style="
+        background:#00BCD4; color:#fff; border:none; border-radius:8px;
+        padding:12px; font-size:1rem; font-weight:600; font-family:'Inter',sans-serif;
+        cursor:pointer; transition:background .2s;
+      " onmouseover="this.style.background='#0097A7'" onmouseout="this.style.background='#00BCD4'">
+        Inloggen
+      </button>
+      <p id="loginFout" style="color:#D4325A; font-size:.85rem; display:none; margin:0;">
+        Onjuist wachtwoord. Probeer opnieuw.
+      </p>
+    </form>
+  </div>
+</div>
+<script>
+  if (sessionStorage.getItem('so_intern_auth') === '1') {
+    document.getElementById('loginGate').style.display = 'none';
+  }
+  async function doLogin(e) {
+    e.preventDefault();
+    const ww = document.getElementById('loginInput').value;
+    const fout = document.getElementById('loginFout');
+    fout.style.display = 'none';
+    try {
+      const r = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wachtwoord: ww })
+      });
+      const data = await r.json();
+      if (data.ok) {
+        sessionStorage.setItem('so_intern_auth', '1');
+        document.getElementById('loginGate').style.display = 'none';
+      } else {
+        fout.style.display = 'block';
+        document.getElementById('loginInput').value = '';
+        document.getElementById('loginInput').focus();
+      }
+    } catch {
+      document.getElementById('loginGate').style.display = 'none';
+    }
+  }
+</script>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="container">
+    <a href="#" class="site-logo" aria-label="SamenOntzorgen">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 200" height="48" aria-label="SamenOntzorgen — Van zorgen naar grip">
+        <g transform="translate(5, 8) scale(0.73)">
+          <path fill="#19ada7" d="M113.72,43.85S135.45-.54,179.68,8.28c44.23,8.82,44.2,57.72,19.36,99.64-33.98,57.33-85.32,77.92-85.32,77.92,0,0,40.07-40.59,61.5-81.96,22.55-43.53,5.25-96.76-61.5-60.03Z"/>
+          <path fill="#d92536" d="M107.59,43.85S87.28,2.65,46.04,7.12C4.8,11.58-9.69,61.48,24.52,111.22c36.94,54.36,82.06,73.46,82.06,73.46,0,0-32.85-28.18-56.88-73.88-23.03-43.81-12.38-76.16,14.48-78.71,25.45-2.41,43.39,11.75,43.39,11.75Z"/>
+        </g>
+        <text x="165" y="112" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="78" letter-spacing="-1">
+          <tspan fill="#d92536">Samen</tspan><tspan fill="#19ada7">Ontzorgen</tspan>
+        </text>
+        <text x="166" y="152" font-family="Inter, Arial, sans-serif" font-style="italic" font-weight="500" font-size="32" fill="#19ada7">Van zorgen naar grip</text>
+      </svg>
+    </a>
+    <span class="nav-badge">Verificatiemap</span>
+  </div>
+</nav>
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="section-label">Coöperatieve ZorgOndernemers (CZO)</div>
+    <h1>Kwalificatiecontrole<br><span class="hero-accent">Live verificatiemap</span></h1>
+    <p>Controleer direct in het gesprek alle kwalificaties van een zorgprofessional — van BIG-registratie tot diploma's en certificaten.</p>
+  </div>
+</section>
+<!-- CONTROLS BAR -->
+<div class="controls-bar">
+  <div class="container controls-inner">
+    <span class="ctrl-label">Professional</span>
+    <input class="prof-input" type="text" id="profName" placeholder="Naam invullen…" oninput="updateTitle(this.value)">
+    <div class="progress-group">
+      <span class="ctrl-label">Voortgang</span>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <span class="progress-count" id="progressCount">0 / 8</span>
+      <button class="btn-reset" onclick="resetAll()">↺ Reset</button>
+    </div>
+  </div>
+</div>
+<!-- MAIN -->
+<main class="main-content">
+  <div class="container">
+    <div class="cards">
+      <!-- 1. BIG -->
+      <div class="card" id="card-big">
+        <div class="card-header">
+          <div class="card-icon">🏥</div>
+          <div class="card-meta">
+            <div class="card-title">BIG-registratie</div>
+            <div class="card-subtitle">Bevoegdheid zorgverlener</div>
+          </div>
+          <div class="status-dot" id="dot-big"></div>
+        </div>
+        <div class="card-body">
+          <span class="method-badge badge--live">✓ Live online — zoeken.bigregister.nl</span>
+          <ul class="checklist" data-card="big">
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Naam of BIG-nummer opgezocht in register</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Beroep en registratiestatus klopt</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Geen tuchtrechtelijke maatregel (schorsing)</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Herregistratie actueel (elke 5 jaar)</span></li>
+          </ul>
+          <textarea class="note-field" placeholder="BIG-nummer noteren…"></textarea>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="https://zoeken.bigregister.nl" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Open BIG-register
+            </a>
+          </div>
+          <div class="tip-box"><strong>Let op:</strong> Zoek altijd op volledige naam én geboortedatum ter verificatie van identiteit.</div>
+        </div>
+      </div>
+      <!-- 2. KVK -->
+      <div class="card" id="card-kvk">
+        <div class="card-header">
+          <div class="card-icon">🏢</div>
+          <div class="card-meta">
+            <div class="card-title">KVK-inschrijving</div>
+            <div class="card-subtitle">Kamer van Koophandel</div>
+          </div>
+          <div class="status-dot" id="dot-kvk"></div>
+        </div>
+        <div class="card-body">
+          <span class="method-badge badge--live">✓ Live online — kvk.nl/zoeken</span>
+          <ul class="checklist" data-card="kvk">
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">KVK-nummer opgezocht en actief</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Bedrijfsnaam en eigenaar kloppen</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Inschrijfdatum gecontroleerd</span></li>
+          </ul>
+          <textarea class="note-field" placeholder="KVK-nummer noteren…"></textarea>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="https://www.kvk.nl/zoeken/" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Open KVK Handelsregister
+            </a>
+            <a class="btn btn-secondary" href="https://openkvk.nl" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              OpenKVK.nl (alternatief)
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- 3. VOG -->
+      <div class="card" id="card-vog">
+        <div class="card-header">
+          <div class="card-icon">📋</div>
+          <div class="card-meta">
+            <div class="card-title">VOG-verklaring</div>
+            <div class="card-subtitle">Verklaring Omtrent het Gedrag</div>
+          </div>
+          <div class="status-dot" id="dot-vog"></div>
+        </div>
+        <div class="card-body">
+          <span class="method-badge badge--live">✓ Live online — validatie.nl</span>
+          <ul class="checklist" data-card="vog">
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Digitale VOG ontvangen van professional</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Echtheid geverifieerd via validatie.nl</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">VOG niet ouder dan 3 maanden</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Naam op VOG klopt met identiteitsbewijs</span></li>
+          </ul>
+          <textarea class="note-field" placeholder="Datum VOG en documentnummer noteren…"></textarea>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="https://validatie.nl" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Open validatie.nl
+            </a>
+          </div>
+          <div class="tip-box"><strong>Papieren VOG?</strong> Visueel controleren op kinegram en watermerk — niet via validatie.nl.</div>
+        </div>
+      </div>
+      <!-- 4. Klachtencommissie -->
+      <div class="card" id="card-klacht">
+        <div class="card-header">
+          <div class="card-icon">⚖️</div>
+          <div class="card-meta">
+            <div class="card-title">Klachtencommissie</div>
+            <div class="card-subtitle">Wkkgz-aansluiting</div>
+          </div>
+          <div class="status-dot" id="dot-klacht"></div>
+        </div>
+        <div class="card-body">
+          <span class="method-badge badge--doc">📄 Document + check</span>
+          <ul class="checklist" data-card="klacht">
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Aansluitingsbewijs ontvangen van professional</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Aanbieder staat op erkende-instanties lijst</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Aansluiting is actueel (niet verlopen)</span></li>
+          </ul>
+          <textarea class="note-field" placeholder="Naam klachtenportaal en aansluitingsnummer…"></textarea>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="https://www.geschilleninstantieszorg.nl/erkende-instanties" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Erkende instanties (CIBG/VWS)
+            </a>
+          </div>
+          <div class="tip-box"><strong>Bekende aanbieders:</strong> Klachtenportaal Zorg, SoloPartners, NIBIG, Zorggeschil, Quasir.</div>
+        </div>
+      </div>
+      <!-- 5. Identiteitsbewijs -->
+      <div class="card" id="card-id">
+        <div class="card-header">
+          <div class="card-icon">🪪</div>
+          <div class="card-meta">
+            <div class="card-title">Identiteitsbewijs</div>
+            <div class="card-subtitle">Paspoort of ID-kaart</div>
+          </div>
+          <div class="status-dot" id="dot-id"></div>
+        </div>
+        <div class="card-body">
+          <span class="method-badge badge--app">📱 App + visueel — IDverificatie app</span>
+          <ul class="checklist" data-card="id">
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Origineel paspoort of ID-kaart gezien (geen rijbewijs)</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Kinegram gecontroleerd (kleurwisseling bij kantelen)</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">NFC-chip gescand via IDverificatie-app ✓</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Naam en foto komen overeen</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Document niet verlopen</span></li>
+          </ul>
+          <textarea class="note-field" placeholder="Type document en geldigheidsdatum noteren…"></textarea>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="https://idverificatie.nl/idverificatie-app/" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              IDverificatie app
+            </a>
+          </div>
+          <div class="tip-box"><strong>Let op:</strong> Rijbewijs is geen geldig identiteitsbewijs voor de identificatieplicht.</div>
+        </div>
+      </div>
+      <!-- 6. Diploma's -->
+      <div class="card" id="card-diploma">
+        <div class="card-header">
+          <div class="card-icon">🎓</div>
+          <div class="card-meta">
+            <div class="card-title">Diploma's</div>
+            <div class="card-subtitle">DUO diplomaregister</div>
+          </div>
+          <div class="status-dot" id="dot-diploma"></div>
+        </div>
+        <div class="card-body">
+          <span class="method-badge badge--live">✓ Live online — DUO zakelijk portaal</span>
+          <ul class="checklist" data-card="diploma">
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Digitaal DUO-uittreksel (PDF) ontvangen</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">PDF geüpload in DUO portaal → echt</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Diplomanaam klopt met gevraagde opleiding</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Naam geverifieerd tegen identiteitsbewijs</span></li>
+          </ul>
+          <textarea class="note-field" placeholder="Opleiding en jaar noteren…"></textarea>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="https://zakelijk.duo.nl/portaal/diplomacontrole/" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              DUO Diplomacontrole portaal
+            </a>
+          </div>
+          <div class="tip-box"><strong>Dekt:</strong> MBO (v.a. 2007), HBO, WO en VO (v.a. 1996). Vraag professional om PDF uit Mijn DUO.</div>
+        </div>
+      </div>
+      <!-- 7. Aansprakelijkheidsverzekering -->
+      <div class="card" id="card-aov">
+        <div class="card-header">
+          <div class="card-icon">🛡️</div>
+          <div class="card-meta">
+            <div class="card-title">Aansprakelijkheidsverzekering</div>
+            <div class="card-subtitle">Beroeps- en bedrijfsaansprakelijkheid</div>
+          </div>
+          <div class="status-dot" id="dot-aov"></div>
+        </div>
+        <div class="card-body">
+          <span class="method-badge badge--doc">📄 Document — polis of verzekeringsbewijs</span>
+          <ul class="checklist" data-card="aov">
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Verzekeringsbewijs of polisblad ontvangen</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Polis is actueel (niet verlopen)</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Dekking omvat beroepsaansprakelijkheid in de zorg</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Verzekerd bedrag minimaal €1.000.000 per incident</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Naam op polis klopt met KVK/identiteitsbewijs</span></li>
+          </ul>
+          <textarea class="note-field" placeholder="Verzekeraar, polisnummer en vervaldatum noteren…"></textarea>
+          <div class="btn-group">
+            <a class="btn btn-secondary" href="https://www.kifid.nl/consument/klachten-over-verzekeringen/" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Kifid — erkende verzekeraars
+            </a>
+          </div>
+          <div class="tip-box"><strong>Veelgebruikte aanbieders ZZP-zorg:</strong> Fbto, Univé, Hiscox, VvAA, Centraal Beheer. Vraag altijd het originele polisblad, niet alleen een schermafbeelding.</div>
+        </div>
+      </div>
+      <!-- 8. Certificaten -->
+      <div class="card" id="card-cert">
+        <div class="card-header">
+          <div class="card-icon">📜</div>
+          <div class="card-meta">
+            <div class="card-title">(Deel)certificaten</div>
+            <div class="card-subtitle">Bijscholing &amp; nascholing</div>
+          </div>
+          <div class="status-dot" id="dot-cert"></div>
+        </div>
+        <div class="card-body">
+          <span class="method-badge badge--manual">⚠️ Handmatig — geen centraal register</span>
+          <ul class="checklist" data-card="cert">
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Origineel certificaat of digitale versie ontvangen</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Geldigheidsdatum is actueel</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">Uitgevende instelling erkend / accreditatienummer aanwezig</span></li>
+            <li onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-text">MBO-deelcertificaat? → verificatie via DUO</span></li>
+          </ul>
+          <textarea class="note-field" placeholder="Certificaten en vervaldatums noteren…"></textarea>
+          <div class="btn-group">
+            <a class="btn btn-secondary" href="https://zakelijk.duo.nl/portaal/diplomacontrole/" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              DUO (MBO-deelcertificaten)
+            </a>
+            <a class="btn btn-secondary" href="https://zorgvoorleren.nl/digitale-certificaten/" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Zorg voor Leren
+            </a>
+          </div>
+          <div class="tip-box"><strong>V&amp;VN-bijscholing:</strong> Controleer accreditatienummer bij opleider of via venvn.nl.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<footer>
+  <div class="container">
+    <p>© 2026 <span>SamenOntzorgen</span> · Eerlijk, eenvoudig, juridisch veilig · Verificatiemap Zorgprofessionals</p>
+  </div>
+</footer>
+<script>
+  const CARDS = ['big','kvk','vog','klacht','id','diploma','aov','cert'];
+  const TOTAL = CARDS.length;
+  function toggleCheck(li) {
+    li.classList.toggle('checked');
+    updateCardState(li.closest('ul').dataset.card);
+    updateProgress();
+  }
+  function updateCardState(id) {
+    const ul = document.querySelector(`[data-card="${id}"]`);
+    const total = ul.querySelectorAll('li').length;
+    const checked = ul.querySelectorAll('li.checked').length;
+    const card = document.getElementById('card-' + id);
+    const dot  = document.getElementById('dot-' + id);
+    card.classList.remove('card--done','card--partial');
+    dot.classList.remove('done','partial');
+    if (checked === total && total > 0) {
+      card.classList.add('card--done'); dot.classList.add('done');
+    } else if (checked > 0) {
+      card.classList.add('card--partial'); dot.classList.add('partial');
+    }
+  }
+  function updateProgress() {
+    let done = 0;
+    CARDS.forEach(id => {
+      const ul = document.querySelector(`[data-card="${id}"]`);
+      const items = ul.querySelectorAll('li').length;
+      const checked = ul.querySelectorAll('li.checked').length;
+      if (items > 0 && checked === items) done++;
+    });
+    const pct = Math.round((done / TOTAL) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressCount').textContent = done + ' / ' + TOTAL;
+  }
+  function updateTitle(name) {
+    document.title = name
+      ? `Verificatie – ${name} – SamenOntzorgen`
+      : 'Verificatiemap — SamenOntzorgen';
+  }
+  function resetAll() {
+    if (!confirm('Alle vinkjes en notities wissen?')) return;
+    document.querySelectorAll('.checklist li').forEach(li => li.classList.remove('checked'));
+    document.querySelectorAll('.note-field').forEach(t => t.value = '');
+    document.getElementById('profName').value = '';
+    CARDS.forEach(id => {
+      document.getElementById('card-'+id).classList.remove('card--done','card--partial');
+      document.getElementById('dot-'+id).classList.remove('done','partial');
+    });
+    updateProgress();
+    updateTitle('');
+  }
+  updateProgress();
+</script>
+</body>
+</html>
