@@ -270,9 +270,7 @@
   </div>
 </div>
 <script>
-  if (sessionStorage.getItem('so_intern_auth') === '1') {
-    document.getElementById('loginGate').style.display = 'none';
-  }
+  document.getElementById('loginGate').style.display = 'none';
   async function doLogin(e) {
     e.preventDefault();
     const ww = document.getElementById('loginInput').value;
